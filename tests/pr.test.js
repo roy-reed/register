@@ -20,8 +20,20 @@ function getDomainData(subdomain) {
 
 t("Users can only update their own subdomains", (t) => {
     if (requiredEnvVars.every((v) => process.env[v])) {
-        const changedFiles = JSON.parse(process.env.CHANGED_FILES);
-        const deletedFiles = JSON.parse(process.env.DELETED_FILES);
+        const parseFileList = (name) => {
+            const raw = process.env[name];
+            if (!raw) return [];
+
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                throw new TypeError(`${name} must be a JSON array`);
+            }
+
+            return parsed;
+        };
+
+        const changedFiles = parseFileList("CHANGED_FILES");
+        const deletedFiles = parseFileList("DELETED_FILES");
         const prAuthor = process.env.PR_AUTHOR.toLowerCase();
         const prAuthorId = process.env.PR_AUTHOR_ID;
 
@@ -32,7 +44,7 @@ t("Users can only update their own subdomains", (t) => {
             .filter((file) => file.name.startsWith("domains/"))
             .map((file) => path.basename(file.name));
 
-        if (!changedJSONFiles && !deletedFiles) return t.pass();
+        if (changedJSONFiles.length === 0 && deletedJSONFiles.length === 0) return t.pass();
         if (process.env.PR_LABELS && process.env.PR_LABELS.includes("ci: bypass-owner-check")) return t.pass();
 
         changedJSONFiles.forEach((file) => {
