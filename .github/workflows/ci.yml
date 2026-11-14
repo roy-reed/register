@@ -27,6 +27,9 @@ jobs:
 
             - run: npm ci
 
+            - name: Check repository size
+              run: npm run check:repository-size
+
             - name: Fetch PR information
               if: github.event_name == 'pull_request'
               env:
