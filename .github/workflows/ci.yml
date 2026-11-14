@@ -27,6 +27,9 @@ jobs:
 
             - run: npm ci
 
+            - name: Check repository size
+              run: npm run check:repository-size
+
             - name: Fetch PR information
               if: github.event_name == 'pull_request'
               env:
@@ -36,8 +39,9 @@ jobs:
                   echo "PR_AUTHOR=${{ github.event.pull_request.user.login }}" >> "$GITHUB_ENV"
                   echo "PR_AUTHOR_ID=${{ github.event.pull_request.user.id }}" >> "$GITHUB_ENV"
                   echo "PR_LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '[.labels[].name]')" >> "$GITHUB_ENV"
-                  echo "CHANGED_FILES=$(gh api --jq '[.[] | select(.status != "removed") | .filename]' "repos/${{ github.repository }}/pulls/$PR/files")" >> "$GITHUB_ENV"
-                  echo "DELETED_FILES=$(gh api --jq '[.[] | select(.status == "removed") | {name: .filename, data: .patch}]' "repos/${{ github.repository }}/pulls/$PR/files")" >> "$GITHUB_ENV"
+                  pr_files="$(gh api --paginate --slurp "repos/${{ github.repository }}/pulls/$PR/files?per_page=100" | jq 'add')"
+                  echo "CHANGED_FILES=$(printf '%s' "$pr_files" | jq -c '[.[] | select(.status != "removed") | .filename]')" >> "$GITHUB_ENV"
+                  echo "DELETED_FILES=$(printf '%s' "$pr_files" | jq -c '[.[] | select(.status == "removed") | {name: .filename, data: .patch}]')" >> "$GITHUB_ENV"
 
             - uses: gacts/install-dnscontrol@890ba3249712c51203ccb7aba63307c0091e921b # v1.3.4
               if: github.event_name == 'pull_request' && contains(fromJson(env.CHANGED_FILES), 'dnsconfig.js')
