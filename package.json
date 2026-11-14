@@ -3,7 +3,8 @@
   "scripts": {
     "test": "npx ava tests/*.test.js",
     "check:reserved-order": "node util/check-reserved-order.cjs",
-    "add:reserved": "node util/add-reserved-subdomain.cjs"
+    "add:reserved": "node util/add-reserved-subdomain.cjs",
+    "check:repository-size": "node util/check-repository-size.cjs"
   },
   "devDependencies": {
     "ava": "^8.0.1",
